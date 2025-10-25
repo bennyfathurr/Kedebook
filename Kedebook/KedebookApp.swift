@@ -10,23 +10,14 @@ import SwiftData
 
 @main
 struct KedebookApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @StateObject private var syncManager = SyncManager.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .modelContainer(for: [ReviewEntity.self, BookBookmark.self, UserProfile.self])
+                .onAppear { Task { await syncManager.syncPending() } }
         }
-        .modelContainer(sharedModelContainer)
     }
 }
+
