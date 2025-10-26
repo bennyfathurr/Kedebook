@@ -16,7 +16,20 @@ struct KedebookApp: App {
         WindowGroup {
             RootView()
                 .modelContainer(for: [ReviewEntity.self, BookBookmark.self, UserProfile.self])
-                .onAppear { Task { await syncManager.syncPending() } }
+                .onAppear {
+                    let storeURL = try? FileManager.default
+                        .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+                        .first?.appendingPathComponent("default.store")
+                    print("📦 SwiftData store:", storeURL?.path ?? "unknown")
+                    if let supportURL = try? FileManager.default
+                        .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+                        .first?
+                        .appendingPathComponent("default.store") {
+                        print("📁 SwiftData store location:", supportURL.path)
+                    } else {
+                        print("Could not locate SwiftData store.")
+                    }
+                }
         }
     }
 }

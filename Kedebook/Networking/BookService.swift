@@ -13,7 +13,7 @@ struct Book: Identifiable, Decodable {
     let title: String
     let author_name: [String]?
     let cover_i: Int?
-    
+
     enum CodingKeys: String, CodingKey {
         case title
         case author_name
@@ -49,13 +49,40 @@ struct BookSearchResponse: Decodable {
 // MARK: - Service
 class BookService {
     func searchBooks(query: String) async throws -> [Book] {
+        // Encode query safely
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)"
+
+        // Use exact phrase matching to improve relevance
+        let urlString = "https://openlibrary.org/search.json?q=\"\(encodedQuery)\"&has_fulltext=true"
+
+        // Fetch
         let response: BookSearchResponse = try await APIClient.shared.get(
             urlString: urlString,
             responseType: BookSearchResponse.self
         )
-        return response.docs
+
+        // Filter out irrelevant or incomplete results
+        let filtered = response.docs.filter {
+            !$0.title.isEmpty &&
+            !($0.author_name?.isEmpty ?? true) &&
+            !$0.id.isEmpty
+        }
+
+        // Sort by rough relevance
+        let ranked = filtered.sorted {
+            relevanceScore(for: $0, query: query) > relevanceScore(for: $1, query: query)
+        }
+
+        return ranked
+    }
+
+    private func relevanceScore(for book: Book, query: String) -> Int {
+        let lower = query.lowercased()
+        var score = 0
+        if book.title.lowercased().contains(lower) { score += 10 }
+        if let authors = book.author_name,
+           authors.joined(separator: " ").lowercased().contains(lower) { score += 5 }
+        return score
     }
 
     func getBookDetails(workKey: String) async throws -> BookDetail {
@@ -64,12 +91,13 @@ class BookService {
         if !key.hasSuffix(".json") { key += ".json" } // ensure .json
         
         let urlString = "https://openlibrary.org\(key)"
+        print("📘 Fetching details from:", urlString)
+
         let detail: BookDetail = try await APIClient.shared.get(
             urlString: urlString,
             responseType: BookDetail.self
         )
-        print("📘 Fetching details from: \(urlString)")
+
         return detail
     }
-
 }

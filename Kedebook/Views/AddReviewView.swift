@@ -9,6 +9,8 @@ import SwiftUI
 
 struct AddReviewView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    
     @ObservedObject var viewModel: BookDetailViewModel
     @State private var comment = ""
     @State private var rating = 3
@@ -30,7 +32,7 @@ struct AddReviewView: View {
                         comment: comment
                     )
 
-                    LocalStore.shared.save(entity)
+                    LocalStore.shared.save(entity, context: context)
 
                     // 2. Build review payload with device UUID
                     let remoteReview = Review(
@@ -47,7 +49,7 @@ struct AddReviewView: View {
                     if NetworkMonitor.shared.isConnected {
                         do {
                             try await viewModel.reviewService.postReview(remoteReview)
-                            LocalStore.shared.markSynced(entity.localID)
+                            LocalStore.shared.markSynced(entity.localID, context: context)
                             print("Review submitted successfully.")
                         } catch {
                             let message = error.localizedDescription.lowercased()

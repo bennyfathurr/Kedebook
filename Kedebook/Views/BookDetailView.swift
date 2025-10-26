@@ -96,8 +96,11 @@ struct BookDetailView: View {
                         bookID: book.id,
                         title: book.title,
                         coverURL: book.coverURL(size: .medium),
+                        authors: viewModel.authors,
+                        description: viewModel.description,
                         context: context
                     )
+
                     isBookmarked = true
                 }
             }

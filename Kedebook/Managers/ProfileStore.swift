@@ -25,7 +25,7 @@ final class ProfileStore {
     func updateProfile(_ profile: UserProfile, name: String, /*email: String?,*/ avatarURL: URL?, context: ModelContext) {
         profile.name = name
         //profile.email = email
-        profile.avatarURLString = avatarURL?.absoluteString
+        //profile.avatarURLString = avatarURL?.absoluteString
         try? context.save()
     }
 }

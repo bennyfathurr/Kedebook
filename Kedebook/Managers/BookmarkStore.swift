@@ -20,11 +20,12 @@ final class BookmarkStore {
         return ((try? context.fetch(d)) ?? []).isEmpty == false
     }
 
-    func addBookmark(bookID: String, title: String, coverURL: URL?, context: ModelContext) {
-        let bookmark = BookBookmark(bookID: bookID, title: title, coverURL: coverURL)
+    func addBookmark(bookID: String, title: String, coverURL: URL?, authors: [String]? = nil, description: String? = nil, context: ModelContext) {
+        let bookmark = BookBookmark(bookID: bookID, title: title, coverURL: coverURL, authors: authors, description: description)
         context.insert(bookmark)
         try? context.save()
     }
+
 
     func removeBookmark(bookID: String, context: ModelContext) {
         let d = FetchDescriptor<BookBookmark>(

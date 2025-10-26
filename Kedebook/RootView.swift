@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct RootView: View {
+    @Environment(\.modelContext) private var context
+    
     var body: some View {
         TabView {
             NavigationStack { BookListView() }
@@ -19,5 +21,8 @@ struct RootView: View {
             NavigationStack { ProfileView() }
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
         }
+        .task {
+                await SyncManager.shared.syncPending(context: context)
+              }
     }
 }

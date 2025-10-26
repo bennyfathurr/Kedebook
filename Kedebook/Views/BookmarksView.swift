@@ -13,27 +13,57 @@ struct BookmarksView: View {
     @Query(sort: \BookBookmark.createdAt, order: .reverse) private var bookmarks: [BookBookmark]
 
     var body: some View {
-        List(bookmarks) { b in
-            HStack {
-                if let url = b.coverURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image.resizable().frame(width: 40, height: 60).cornerRadius(4)
-                        default:
-                            Color.gray.frame(width: 40, height: 60).cornerRadius(4)
+        List {
+            ForEach(bookmarks) { b in
+                NavigationLink {
+                    BookDetailOfflineView(bookmark: b)
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        if let url = b.coverURL {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 50, height: 75)
+                                        .cornerRadius(6)
+                                default:
+                                    Color.gray.frame(width: 50, height: 75).cornerRadius(6)
+                                }
+                            }
+                        } else {
+                            Color.gray.frame(width: 50, height: 75).cornerRadius(6)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(b.title)
+                                .font(.headline)
+                                .lineLimit(2)
+                            if let authors = b.authorNames, !authors.isEmpty {
+                                Text(authors.joined(separator: ", "))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                            if let desc = b.descriptionText {
+                                Text(desc)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(2)
+                            }
                         }
                     }
-                } else {
-                    Color.gray.frame(width: 40, height: 60).cornerRadius(4)
+                    .padding(.vertical, 4)
                 }
-                Text(b.title).font(.headline)
-            }
-            .swipeActions {
-                Button(role: .destructive) {
-                    context.delete(b)
-                    try? context.save()
-                } label: { Text("Delete") }
+                .swipeActions {
+                    Button(role: .destructive) {
+                        context.delete(b)
+                        try? context.save()
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         .navigationTitle("Bookmarks")

@@ -10,17 +10,20 @@ import Foundation
 
 @Model
 final class UserProfile {
-    @Attribute(.unique) var userID: UUID
+    @Attribute(.unique) var userID: String
     var name: String
-    var email: String?
-    var avatarURLString: String?
+    //var email: String?
+    var avatarPath: String?  // local file path instead of URL
 
-    init(name: String, /*email: String? = nil,*/ avatarURL: URL? = nil) {
-        self.userID = UUID()
+    init(name: String, /*email: String? = nil,*/ avatarPath: String? = nil) {
+        self.userID = DeviceIdentity.shared.id
         self.name = name
         //self.email = email
-        self.avatarURLString = avatarURL?.absoluteString
+        self.avatarPath = avatarPath
     }
 
-    var avatarURL: URL? { avatarURLString.flatMap(URL.init(string:)) }
+    var avatarImageURL: URL? {
+        guard let path = avatarPath else { return nil }
+        return URL(fileURLWithPath: path)
+    }
 }

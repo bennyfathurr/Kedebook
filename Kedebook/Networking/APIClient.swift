@@ -29,11 +29,14 @@ class APIClient {
         }
 
         do {
-            return try JSONDecoder().decode(T.self, from: data)
+            let decoded = try JSONDecoder().decode(T.self, from: data)
+            return decoded
         } catch {
-            print("Decoding failed for \(urlString)")
+            print("Decoding error for \(urlString):", error)
+            print(String(data: data, encoding: .utf8) ?? "No data")
             throw APIError.decodingFailed
         }
+
     }
 }
 
