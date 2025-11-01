@@ -20,7 +20,7 @@ struct BookListView: View {
                     
                     Button("Search") {
                         Task {
-                            await viewModel.search()
+                            await viewModel.search(query: viewModel.query)
                         }
                     }
                     .padding(.trailing)

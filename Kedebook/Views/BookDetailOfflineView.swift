@@ -9,12 +9,14 @@ import SwiftUI
 
 struct BookDetailOfflineView: View {
     let bookmark: BookBookmark
-    @State private var fullDescription: String?
+    @State private var bookDetail: BookDetail?
     @State private var isLoading = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+
+                // MARK: - Cover
                 if let url = bookmark.coverURL {
                     AsyncImage(url: url) { phase in
                         switch phase {
@@ -25,11 +27,14 @@ struct BookDetailOfflineView: View {
                                 .frame(maxWidth: .infinity)
                                 .cornerRadius(8)
                         default:
-                            Color.gray.frame(height: 200).cornerRadius(8)
+                            Color.gray
+                                .frame(height: 200)
+                                .cornerRadius(8)
                         }
                     }
                 }
 
+                // MARK: - Title & Author
                 Text(bookmark.title)
                     .font(.title2)
                     .bold()
@@ -42,10 +47,16 @@ struct BookDetailOfflineView: View {
 
                 Divider()
 
-                Text(fullDescription ?? bookmark.descriptionText ?? "No description available.")
-                    .font(.body)
-                    .foregroundColor(.primary)
-                    .lineSpacing(4)
+                // MARK: - Description
+                if isLoading {
+                    ProgressView("Loading description...")
+                        .padding(.vertical, 8)
+                } else {
+                    Text(bookDetail?.descriptionText ?? "No description available.")
+                        .font(.body)
+                        .foregroundColor(.primary)
+                        .lineSpacing(4)
+                }
             }
             .padding()
         }
@@ -55,17 +66,18 @@ struct BookDetailOfflineView: View {
         }
     }
 
+    // MARK: - Fetch Details
     private func fetchUpdatedDetailsIfNeeded() async {
-        guard fullDescription == nil else { return }
+        guard bookDetail == nil else { return }
         isLoading = true
         defer { isLoading = false }
 
         let service = BookService()
         do {
             let detail = try await service.getBookDetails(workKey: bookmark.bookID)
-            fullDescription = detail.descriptionText
+            bookDetail = detail
         } catch {
-            print("⚠️ Failed to fetch book details: \(error)")
+            print("Failed to fetch book details: \(error)")
         }
     }
 }

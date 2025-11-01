@@ -16,11 +16,11 @@ struct KdChip: View {
         Button(action: action) {
             Text(title)
                 .font(KdFont.caption.weight(.semibold))
-                .padding(.horizontal, KdSpace.md.rawValue)
-                .padding(.vertical, KdSpace.sm.rawValue)
+                .padding(.horizontal, KdSpace.md)
+                .padding(.vertical, KdSpace.sm)
                 .background(isSelected ? KdColor.accent : KdColor.surfaceCard)
                 .foregroundStyle(isSelected ? Color.white : KdColor.textPrimary)
-                .clipShape(RoundedRectangle(cornerRadius: KdRadius.chip.rawValue, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: KdRadius.chip, style: .continuous))
         }
         .buttonStyle(.plain)
     }

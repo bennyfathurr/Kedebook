@@ -1,0 +1,136 @@
+{
+  "fill-specializations" : [
+    {
+      "value" : "system-light"
+    },
+    {
+      "appearance" : "dark",
+      "value" : "system-dark"
+    }
+  ],
+  "groups" : [
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "image-name" : "5.svg",
+          "name" : "5",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              179.24430768719017,
+              0.4092118136719165
+            ]
+          }
+        }
+      ],
+      "lighting" : "individual",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.4
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "4.svg",
+          "name" : "4",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              0.7700121888400169,
+              171.0024134045682
+            ]
+          }
+        },
+        {
+          "glass" : true,
+          "image-name-specializations" : [
+            {
+              "value" : "3.svg"
+            },
+            {
+              "appearance" : "dark",
+              "value" : "light 2.svg"
+            }
+          ],
+          "name" : "2",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              0.7700121888400169,
+              -83.9129352051696
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.4
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name-specializations" : [
+            {
+              "value" : "2.svg"
+            },
+            {
+              "appearance" : "dark",
+              "value" : "light 2.svg"
+            }
+          ],
+          "name" : "light 2",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              -166.74566624370266,
+              103.1126173411403
+            ]
+          }
+        },
+        {
+          "image-name" : "1.svg",
+          "name" : "1",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              -166.74566624370266,
+              -102.16769998628898
+            ]
+          }
+        }
+      ],
+      "position" : {
+        "scale" : 1,
+        "translation-in-points" : [
+          -12.459783245137901,
+          0
+        ]
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.2
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

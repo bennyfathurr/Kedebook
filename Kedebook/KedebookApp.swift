@@ -11,6 +11,10 @@ import SwiftData
 @main
 struct KedebookApp: App {
     @StateObject private var syncManager = SyncManager.shared
+    
+    init() {
+            AppSupportDir.ensureExists()
+        }
 
     var body: some Scene {
         WindowGroup {
@@ -20,12 +24,12 @@ struct KedebookApp: App {
                     let storeURL = try? FileManager.default
                         .urls(for: .applicationSupportDirectory, in: .userDomainMask)
                         .first?.appendingPathComponent("default.store")
-                    print("📦 SwiftData store:", storeURL?.path ?? "unknown")
+                    print("SwiftData store:", storeURL?.path ?? "unknown")
                     if let supportURL = try? FileManager.default
                         .urls(for: .applicationSupportDirectory, in: .userDomainMask)
                         .first?
                         .appendingPathComponent("default.store") {
-                        print("📁 SwiftData store location:", supportURL.path)
+                        print("SwiftData store location:", supportURL.path)
                     } else {
                         print("Could not locate SwiftData store.")
                     }

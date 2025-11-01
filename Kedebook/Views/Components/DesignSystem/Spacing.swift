@@ -7,6 +7,10 @@
 
 import SwiftUI
 
-enum KdSpace: CGFloat {
-    case xs = 4, sm = 8, md = 16, lg = 24, xl = 32
+enum KdSpace {
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let md: CGFloat = 16
+    static let lg: CGFloat = 24
+    static let xl: CGFloat = 32
 }

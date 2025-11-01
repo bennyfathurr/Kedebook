@@ -10,62 +10,77 @@ import SwiftData
 
 struct BookmarksView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \BookBookmark.createdAt, order: .reverse) private var bookmarks: [BookBookmark]
+    @Query(sort: \BookBookmark.createdAt, order: .reverse)
+    var bookmarks: [BookBookmark]
 
     var body: some View {
-        List {
-            ForEach(bookmarks) { b in
-                NavigationLink {
-                    BookDetailOfflineView(bookmark: b)
-                } label: {
-                    HStack(alignment: .top, spacing: 12) {
-                        if let url = b.coverURL {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 50, height: 75)
-                                        .cornerRadius(6)
-                                default:
-                                    Color.gray.frame(width: 50, height: 75).cornerRadius(6)
-                                }
-                            }
-                        } else {
-                            Color.gray.frame(width: 50, height: 75).cornerRadius(6)
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(b.title)
-                                .font(.headline)
-                                .lineLimit(2)
-                            if let authors = b.authorNames, !authors.isEmpty {
-                                Text(authors.joined(separator: ", "))
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                            }
-                            if let desc = b.descriptionText {
-                                Text(desc)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(2)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-                .swipeActions {
-                    Button(role: .destructive) {
-                        context.delete(b)
-                        try? context.save()
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
+        NavigationStack {
+            if bookmarks.isEmpty {
+                emptyState
+            } else {
+                bookmarkList
             }
         }
+        .background(KdColor.background.ignoresSafeArea())
         .navigationTitle("Bookmarks")
+    }
+
+    private var emptyState: some View {
+        Text("No bookmarks yet.")
+            .font(KdFont.body)
+            .foregroundStyle(KdColor.textSecondary)
+    }
+
+    private var bookmarkList: some View {
+        ScrollView {
+            LazyVStack(spacing: KdSpace.md) {
+                ForEach(bookmarks) { b in
+                    BookmarkRow(bookmark: b)
+                }
+            }
+            .padding(KdSpace.md)
+        }
+    }
+}
+
+private struct BookmarkRow: View {
+    let bookmark: BookBookmark
+
+    var body: some View {
+        NavigationLink(destination: BookDetailOfflineView(bookmark: bookmark)) {
+            HStack(spacing: KdSpace.md) {
+                AsyncImage(url: bookmark.coverURL) { phase in
+                    switch phase {
+                    case .success(let img): img.resizable().scaledToFill()
+                    default: Rectangle().fill(KdColor.divider.opacity(0.3))
+                    }
+                }
+                .frame(width: 80, height: 110)
+                .clipShape(RoundedRectangle(cornerRadius: KdRadius.card))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(bookmark.title)
+                        .font(KdFont.body.weight(.semibold))
+                        .foregroundStyle(KdColor.textPrimary)
+                        .lineLimit(2)
+                    if let authors = bookmark.authorNames, !authors.isEmpty {
+                        Text(authors.joined(separator: ", "))
+                            .font(KdFont.caption)
+                            .foregroundStyle(KdColor.textSecondary)
+                            .lineLimit(1)
+                    }
+                    if let desc = bookmark.descriptionText {
+                        Text(desc)
+                            .font(KdFont.caption)
+                            .foregroundStyle(KdColor.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
+                Spacer()
+            }
+            .padding(KdSpace.md)
+            .kdCard()
+        }
+        .buttonStyle(.plain)
     }
 }

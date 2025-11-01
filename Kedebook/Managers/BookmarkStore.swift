@@ -43,3 +43,12 @@ final class BookmarkStore {
         return (try? context.fetch(d)) ?? []
     }
 }
+
+extension BookmarkStore {
+    func isBookmarked(bookID: String, context: ModelContext) -> Bool {
+        let request = FetchDescriptor<BookBookmark>(
+            predicate: #Predicate { $0.bookID == bookID }
+        )
+        return (try? context.fetch(request).isEmpty == false) ?? false
+    }
+}

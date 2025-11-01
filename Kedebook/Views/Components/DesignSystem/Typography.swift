@@ -8,8 +8,9 @@
 import SwiftUI
 
 enum KdFont {
-    static let h1 = Font.system(size: 28, weight: .bold, design: .default)
-    static let h2 = Font.system(size: 22, weight: .semibold, design: .default)
-    static let body = Font.system(size: 17, weight: .regular, design: .default)
-    static let caption = Font.system(size: 13, weight: .regular, design: .default)
+    static let h1: Font = .system(size: 34, weight: .bold)
+    static let h2: Font = .system(size: 28, weight: .bold)
+    static let h3: Font = .system(size: 20, weight: .semibold)
+    static let body: Font = .body
+    static let caption: Font = .caption
 }

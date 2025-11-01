@@ -15,89 +15,87 @@ struct Book: Identifiable, Decodable {
     let cover_i: Int?
 
     enum CodingKeys: String, CodingKey {
-        case title
-        case author_name
-        case cover_i
-        case key
+        case title, author_name, cover_i, key
     }
 
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.title = try container.decode(String.self, forKey: .title)
-        self.author_name = try? container.decode([String].self, forKey: .author_name)
-        self.cover_i = try? container.decode(Int.self, forKey: .cover_i)
-        self.id = try container.decode(String.self, forKey: .key)
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.title = try c.decode(String.self, forKey: .title)
+        self.author_name = try? c.decode([String].self, forKey: .author_name)
+        self.cover_i = try? c.decode(Int.self, forKey: .cover_i)
+        self.id = try c.decode(String.self, forKey: .key)
+    }
+
+    init(id: String, title: String, author_name: [String]?, cover_i: Int?) {
+        self.id = id
+        self.title = title
+        self.author_name = author_name
+        self.cover_i = cover_i
     }
 
     func coverURL(size: CoverSize = .medium) -> URL? {
-        guard let cover_i = cover_i else { return nil }
+        guard let cover_i else { return nil }
         return URL(string: "https://covers.openlibrary.org/b/id/\(cover_i)-\(size.rawValue).jpg")
     }
 }
 
 // MARK: - Supporting Types
 enum CoverSize: String {
-    case small = "S"
-    case medium = "M"
-    case large = "L"
+    case small = "S", medium = "M", large = "L"
 }
 
-struct BookSearchResponse: Decodable {
+struct SubjectResponse: Decodable {
+    let works: [Book]
+}
+
+struct SearchResponse: Decodable {
     let docs: [Book]
 }
 
 // MARK: - Service
 class BookService {
-    func searchBooks(query: String) async throws -> [Book] {
-        // Encode query safely
-        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+    
+    func fetchBooks(for category: String?) async throws -> [Book] {
+        let query = category?.lowercased() ?? "book"
+        let urlString = "https://openlibrary.org/search.json?q=\(query)&limit=15&fields=key,title,author_name,cover_i"
 
-        // Use exact phrase matching to improve relevance
-        let urlString = "https://openlibrary.org/search.json?q=\"\(encodedQuery)\"&has_fulltext=true"
+        guard let url = URL(string: urlString) else { throw URLError(.badURL) }
 
-        // Fetch
-        let response: BookSearchResponse = try await APIClient.shared.get(
-            urlString: urlString,
-            responseType: BookSearchResponse.self
-        )
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
+        request.setValue("Kedebook (iOS)", forHTTPHeaderField: "User-Agent")
 
-        // Filter out irrelevant or incomplete results
-        let filtered = response.docs.filter {
-            !$0.title.isEmpty &&
-            !($0.author_name?.isEmpty ?? true) &&
-            !$0.id.isEmpty
-        }
-
-        // Sort by rough relevance
-        let ranked = filtered.sorted {
-            relevanceScore(for: $0, query: query) > relevanceScore(for: $1, query: query)
-        }
-
-        return ranked
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
+        return decoded.docs
     }
 
-    private func relevanceScore(for book: Book, query: String) -> Int {
-        let lower = query.lowercased()
-        var score = 0
-        if book.title.lowercased().contains(lower) { score += 10 }
-        if let authors = book.author_name,
-           authors.joined(separator: " ").lowercased().contains(lower) { score += 5 }
-        return score
-    }
+    func searchBooks(query: String, limit: Int = 20) async throws -> [Book] {
+            // Avoid empty search string crash
+            guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
 
+            let safeQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "book"
+            let urlString = "https://openlibrary.org/search.json?q=\(safeQuery)&limit=\(limit)"
+
+            guard let url = URL(string: urlString) else { return [] }
+            let (data, _) = try await URLSession.shared.data(from: url)
+
+            let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
+            return decoded.docs
+        }
+}
+
+extension BookService {
     func getBookDetails(workKey: String) async throws -> BookDetail {
-        var key = workKey
-        if !key.hasPrefix("/") { key = "/" + key } // ensure leading slash
-        if !key.hasSuffix(".json") { key += ".json" } // ensure .json
-        
-        let urlString = "https://openlibrary.org\(key)"
-        print("📘 Fetching details from:", urlString)
+            let trimmedKey = workKey.replacingOccurrences(of: "/works/", with: "")
+            let urlString = "https://openlibrary.org/works/\(trimmedKey).json"
 
-        let detail: BookDetail = try await APIClient.shared.get(
-            urlString: urlString,
-            responseType: BookDetail.self
-        )
+            guard let url = URL(string: urlString) else {
+                throw URLError(.badURL)
+            }
 
-        return detail
-    }
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decoder = JSONDecoder()
+            return try decoder.decode(BookDetail.self, from: data)
+        }
 }

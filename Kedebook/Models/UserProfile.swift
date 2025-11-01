@@ -13,7 +13,7 @@ final class UserProfile {
     @Attribute(.unique) var userID: String
     var name: String
     //var email: String?
-    var avatarPath: String?  // local file path instead of URL
+    @Attribute(originalName: "avatarURLString") var avatarPath: String?
 
     init(name: String, /*email: String? = nil,*/ avatarPath: String? = nil) {
         self.userID = DeviceIdentity.shared.id

@@ -16,7 +16,7 @@ final class BookBookmark {
     var coverURLString: String?
     var authorNames: [String]?
     var descriptionText: String?
-    var createdAt: Date
+    @Attribute(originalName: "dateAdded") var createdAt: Date
 
     init(bookID: String, title: String, coverURL: URL?, authors: [String]? = nil, description: String? = nil) {
         self.id = UUID()

@@ -7,6 +7,9 @@
 
 import SwiftUI
 
-enum KdRadius: CGFloat {
-    case card = 12, chip = 8, button = 12
+
+enum KdRadius {
+    static let card: CGFloat   = 12
+    static let chip: CGFloat   = 8
+    static let button: CGFloat = 12
 }

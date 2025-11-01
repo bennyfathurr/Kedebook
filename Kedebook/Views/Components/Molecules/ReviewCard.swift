@@ -15,8 +15,8 @@ struct ReviewCard: View {
     let timestamp: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: KdSpace.sm.rawValue) {
-            HStack(spacing: KdSpace.sm.rawValue) {
+        VStack(alignment: .leading, spacing: KdSpace.sm) {
+            HStack(spacing: KdSpace.sm) {
                 (avatar ?? Image(systemName: "person.circle.fill"))
                     .resizable().frame(width: 32, height: 32).clipShape(Circle())
                 VStack(alignment: .leading, spacing: 2) {
@@ -31,7 +31,7 @@ struct ReviewCard: View {
                 .foregroundStyle(KdColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(KdSpace.md.rawValue)
-        .kdMaterialCard()
+        .padding(KdSpace.md)
+        .kdCard()
     }
 }

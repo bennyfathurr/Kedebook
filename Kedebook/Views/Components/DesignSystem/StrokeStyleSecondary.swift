@@ -12,10 +12,10 @@ struct KdSecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(KdFont.body.weight(.semibold))
             .foregroundStyle(KdColor.accent)
-            .padding(.vertical, KdSpace.md.rawValue)
+            .padding(.vertical, KdSpace.md)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: KdRadius.button.rawValue, style: .continuous)
+                RoundedRectangle(cornerRadius: KdRadius.button, style: .continuous)
                     .stroke(KdColor.accent.opacity(configuration.isPressed ? 0.6 : 1.0), lineWidth: 1)
             )
             .contentShape(Rectangle())

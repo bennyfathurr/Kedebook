@@ -2,18 +2,22 @@
 //  BookDetailView.swift
 //  Kedebook
 //
-//  Created by Muhammad Benny Fathurrahman on 25/10/25.
-//
 
 import SwiftUI
+import SwiftData
 
 struct BookDetailView: View {
-    let book: Book
     @Environment(\.modelContext) private var context
-    @State private var isBookmarked = false
+    @Environment(\.dismiss) private var dismiss
+
     @StateObject private var viewModel: BookDetailViewModel
-    @State private var showingAddReview = false
-    
+    @State private var showReviewSheet = false
+    @State private var isBookmarked = false
+    @State private var showAlreadyReviewedAlert = false
+
+    private let book: Book
+
+    // MARK: Init
     init(book: Book) {
         self.book = book
         _viewModel = StateObject(
@@ -23,97 +27,203 @@ struct BookDetailView: View {
             )
         )
     }
-    
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
-                if let url = viewModel.largeCoverURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            ProgressView()
-                                .frame(height: 200)
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFit()
-                                .frame(maxWidth: .infinity)
-                        case .failure:
-                            Image(systemName: "book.closed")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 200)
-                        @unknown default:
-                            EmptyView()
-                        }
+            VStack(spacing: 20) {
+                // Cover
+                AsyncImage(url: book.coverURL(size: .large)) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: 220)
+                            .clipShape(RoundedRectangle(cornerRadius: KdRadius.card))
+                            .shadow(radius: 4)
+                    default:
+                        RoundedRectangle(cornerRadius: KdRadius.card)
+                            .fill(KdColor.divider.opacity(0.3))
+                            .frame(width: 220, height: 320)
                     }
                 }
-                
-                Text(viewModel.title)
-                    .font(.title)
-                    .padding(.vertical, 4)
-                
-                Text("By " + viewModel.authors.joined(separator: ", "))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                Divider()
-                    .padding(.vertical, 8)
-                
+
+                // Title + Authors
+                VStack(spacing: 8) {
+                    Text(viewModel.title.isEmpty ? book.title : viewModel.title)
+                        .font(KdFont.h2)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(Color.textTritary)
+                        .padding(.horizontal)
+
+                    if !viewModel.authors.isEmpty {
+                        Text(viewModel.authors.joined(separator: ", "))
+                            .font(KdFont.caption)
+                            .foregroundStyle(Color.textTritary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                }
+
+                // Description
                 Text(viewModel.description)
-                    .padding(.bottom, 16)
-                
-                
-                Section("User Reviews") {
+                    .font(KdFont.body)
+                    .foregroundStyle(Color.textTritary)
+                    .padding(.horizontal)
+
+                Divider().padding(.horizontal)
+
+                // Reviews
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Reviews")
+                        .font(KdFont.h3)
+                        .foregroundStyle(KdColor.textPrimary)
+                        .padding(.horizontal)
+
                     if viewModel.reviews.isEmpty {
-                        Text("No reviews yet.")
-                            .foregroundColor(.secondary)
+                        Text("No reviews yet. Be the first to write one!")
+                            .font(KdFont.caption)
+                            .foregroundStyle(KdColor.textSecondary)
+                            .padding(.horizontal)
                     } else {
                         ForEach(viewModel.reviews) { review in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("⭐️ \(review.rating) / 5")
-                                    .bold()
-                                Text(review.comment)
-                            }
-                            .padding(.vertical, 6)
+                            ReviewRow(review: review)
+                                .padding(.horizontal)
                         }
                     }
                 }
-                
+                .padding(.bottom, 40)
             }
-            .padding()
+            .padding(.top)
         }
+        .background(KdColor.background.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            Button("Add Review") {
-                showingAddReview = true
-            }
-            Button(isBookmarked ? "Remove Bookmark" : "Bookmark") {
-                if isBookmarked {
-                    BookmarkStore.shared.removeBookmark(bookID: book.id, context: context)
-                    isBookmarked = false
-                } else {
-                    BookmarkStore.shared.addBookmark(
-                        bookID: book.id,
-                        title: book.title,
-                        coverURL: book.coverURL(size: .medium),
-                        authors: viewModel.authors,
-                        description: viewModel.description,
-                        context: context
-                    )
-
-                    isBookmarked = true
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                // Write review — present instantly, don’t await first
+                Button {
+                    if hasReviewedOnThisDevice(bookID: viewModel.workKey) {
+                        showAlreadyReviewedAlert = true
+                    } else {
+                        showReviewSheet = true
+                    }
+                } label: {
+                    Image(systemName: "square.and.pencil").font(.headline)
                 }
+
+                // Bookmark toggle
+                Button {
+                    if isBookmarked {
+                        BookmarkStore.shared.removeBookmark(bookID: viewModel.workKey, context: context)
+                        isBookmarked = false
+                    } else {
+                        BookmarkStore.shared.addBookmark(
+                            bookID: viewModel.workKey,
+                            title: viewModel.title.isEmpty ? book.title : viewModel.title,
+                            coverURL: book.coverURL(size: .medium),
+                            authors: viewModel.authors.isEmpty ? book.author_name : viewModel.authors,
+                            description: viewModel.description,
+                            context: context
+                        )
+                        isBookmarked = true
+                    }
+                } label: {
+                    Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+                        .font(.headline)
+                }
+                .accessibilityLabel(isBookmarked ? "Remove Bookmark" : "Add Bookmark")
             }
         }
-        .sheet(isPresented: $showingAddReview) {
-            AddReviewView(viewModel: viewModel)
+        // Hide bottom tab bar on this screen
+        .toolbar(.hidden, for: .tabBar)
+
+        // Full-height sheet for writing a review
+        .sheet(isPresented: $showReviewSheet, onDismiss: {
+            Task { await viewModel.refreshReviews() }
+        }) {
+            NavigationStack {
+                AddReviewView(viewModel: viewModel)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                    .interactiveDismissDisabled(false)
+            }
         }
-        .onAppear {
-            isBookmarked = BookmarkStore.shared.isBookBookmarked(book.id, context: context)
+
+        // Duplicate review alert
+        .alert("Review Already Submitted", isPresented: $showAlreadyReviewedAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("You’ve already submitted a review for this book on this device.")
         }
-        .navigationTitle(viewModel.title.isEmpty ? "Details" : viewModel.title)
-        .onAppear {
-            Task { await viewModel.fetchDetails() }
+
+        // Initial loads
+        .task {
+            // set current bookmark state
+            isBookmarked = BookmarkStore.shared.isBookmarked(bookID: viewModel.workKey, context: context)
+            await viewModel.fetchDetails()
         }
     }
+
+    // MARK: Per-device duplicate guard
+    private func hasReviewedOnThisDevice(bookID: String) -> Bool {
+        UserDefaults.standard.bool(forKey: "reviewed.\(bookID)")
+    }
+}
+
+// MARK: - Review Row
+private struct ReviewRow: View {
+    let review: Review
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: "person.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(KdColor.textSecondary)
+
+                Text(review.user)
+                    .font(KdFont.body.weight(.semibold))
+
+                Spacer()
+
+                Text(formattedDate(from: review.created_at))
+                    .font(KdFont.caption)
+                    .foregroundStyle(KdColor.textSecondary)
+            }
+
+            HStack(spacing: 2) {
+                ForEach(0..<5, id: \.self) { i in
+                    Image(systemName: i < review.rating ? "star.fill" : "star")
+                        .foregroundStyle(i < review.rating ? KdColor.accent : KdColor.divider)
+                        .font(.caption)
+                }
+            }
+
+            Text(review.comment)
+                .font(KdFont.body)
+                .foregroundStyle(KdColor.textPrimary)
+                .padding(.top, 2)
+        }
+        .padding()
+        .kdCard()
+    }
+}
+
+// MARK: - Date formatting (ISO8601 → readable)
+private func formattedDate(from timestamp: String?) -> String {
+    guard let timestamp else { return "Unknown date" }
+
+    let iso = ISO8601DateFormatter()
+    iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+    let date: Date? = iso.date(from: timestamp)
+        ?? ISO8601DateFormatter().date(from: timestamp) // fallback without fractional seconds
+
+    guard let d = date else { return timestamp }
+
+    let fmt = DateFormatter()
+    fmt.locale = .current
+    fmt.dateStyle = .medium
+    fmt.timeStyle = .short
+    return fmt.string(from: d) // e.g., “Oct 26, 2025 at 8:18 AM”
 }

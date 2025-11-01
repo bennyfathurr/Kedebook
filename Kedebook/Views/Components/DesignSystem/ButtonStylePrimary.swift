@@ -12,10 +12,10 @@ struct KdPrimaryButtonStyle: ButtonStyle {
         configuration.label
             .font(KdFont.body.weight(.semibold))
             .foregroundStyle(Color.white)
-            .padding(.vertical, KdSpace.md.rawValue)
+            .padding(.vertical, KdSpace.md)
             .frame(maxWidth: .infinity)
             .background(KdColor.accent.opacity(configuration.isPressed ? 0.85 : 1.0))
-            .clipShape(RoundedRectangle(cornerRadius: KdRadius.button.rawValue, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: KdRadius.button, style: .continuous))
             .contentShape(Rectangle())
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }

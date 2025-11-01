@@ -10,6 +10,7 @@ import Combine
 
 @MainActor
 final class BookDetailViewModel: ObservableObject {
+    @Published var book: Book
     @Published var title: String = ""
     @Published var authors: [String] = []
     @Published var description: String = "Loading…"
@@ -27,8 +28,10 @@ final class BookDetailViewModel: ObservableObject {
     init(workKey: String, fallbackAuthors: [String]) {
         self.workKey = workKey
         self.fallbackAuthors = fallbackAuthors
-        self.authors = fallbackAuthors // immediate display
+        self.authors = fallbackAuthors
+        self.book = Book(id: workKey, title: "", author_name: fallbackAuthors, cover_i: nil) // ✅ added
     }
+
 
     func fetchDetails() async {
         // 1) Cache hit for book detail
@@ -50,7 +53,7 @@ final class BookDetailViewModel: ObservableObject {
         }
         
         do { self.reviews = try await reviewService.fetchReviews(bookID: workKey) }
-        catch { print("⚠️ No reviews yet or failed: \(error)") }
+        catch { print("No reviews yet or failed: \(error)") }
 
     }
 
@@ -119,7 +122,19 @@ final class BookDetailViewModel: ObservableObject {
     
     func refreshReviews() async {
         do { self.reviews = try await reviewService.fetchReviews(bookID: workKey) }
-        catch { print("⚠️ \(error)") }
+        catch { print("\(error)") }
     }
+    
+    func hasReviewFromCurrentDevice() async -> Bool {
+        do {
+            let reviews = try await reviewService.fetchReviews(bookID: workKey)
+            let deviceID = DeviceIdentity.shared.id
+            return reviews.contains { $0.device_id == deviceID }
+        } catch {
+            print("Failed to check existing reviews: \(error)")
+            return false
+        }
+    }
+
 
 }
